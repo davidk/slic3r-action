@@ -14,19 +14,21 @@ These can be placed anywhere in your repository.
 
 * A GitHub Actions workflow
 
-This gets created in `.github/main.workflow` and looks something like this:
+This should be in `.github/main.workflow` and looks something like this:
 
 ```
-# 'resolves' triggers separate actions in parallel (N.B. this action sequences each action serially through locking)
-# 'on' will run this workflow on `git push`. 
-# Other types are described here: https://git.io/fhhx5
+# 'resolves' contains labels which fulfill (or 'resolve') the workflow
+# 'on = "push"' will run this workflow on `git push`. 
+# Other 'on' types are described here: https://git.io/fhhx5
 workflow "generate gcode" {
   resolves = ["gen", "batterybox"]
   on = "push"
 }
 
-# 'generate' is named in 'resolves' above. This can any name.
-# 'uses' points to the repository of the action, and will use whatever the '1.41.3' tag/branch/ref points at
+# 'gen' is named in 'resolves' above.
+# 'uses' points to the repository of the action, 
+# and will use whatever the '1.41.3' tag/branch/ref points at.
+#
 # REQUIRED: 'secrets' is where 'GITHUB_TOKEN' is defined. This is provided by GitHub.
 # REQUIRED: 'env' holds configuration parameters for the action. 'SLICE_CFG' is a required parameter.
 # and should point at the config relative to your repository (see the tree below).
@@ -40,7 +42,7 @@ action "gen" {
 }
 
 # OPTIONAL: 'EXTRA_SLICER_ARGS' is an optional parameter for passing any other arguments to the slic3r
-# N.B. --print-center 100,100 on a small print may center the object on the thermistor, 
+# N.B. Prusa i3s --print-center 100,100 on a small print may center the object on the thermistor, 
 # leading to a thermal runaway error (if the part cooling fan is running)
 # the default has been adjusted to --print-center 125,105
 action "batterybox" {
@@ -68,7 +70,6 @@ Your repository might end up looking something like this:
 	├── pocketchip
 	│   ├── pocketchip-clip_0.15mm_PET_MK2S.gcode
 	│   └── pocketchip-clip.stl
-	├── Slic3r_config_bundle.ini
 	├── switch
 	│   ├── switch8_0.15mm_PET_MK2S.gcode
 	│   └── switch8.stl
