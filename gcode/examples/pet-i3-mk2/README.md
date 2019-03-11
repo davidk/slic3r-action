@@ -10,4 +10,4 @@ Steps:
 
 * copy these files to a new directory / your new repository
 
-* follow the new repository instructions and add a new file to run the workflow: e.g. `git init` && `git add .` && `git commit -a -m 'Initial commit'` && `git remote add origin git@github.com:example/example-repository` && `git push -u origin master` && `touch NEWFILE && git add NEWFILE && git commit -m 'added newfile' && git push` 
+* follow the new repository instructions and add a new file to run the workflow: e.g. `git init` && `git add .` && `git commit -a -m 'Initial commit'` && `git remote add origin git@github.com:example/example-repository` && `git push -u origin master`
