@@ -35,9 +35,11 @@ if [[ -z "${BRANCH}" ]]; then
 	BRANCH=master
 fi
 
-if [[ -z $UPDATE_RETRY ]]; then
+if [[ -z "${UPDATE_RETRY}" ]]; then
 	UPDATE_RETRY=5
 fi
+
+echo ">>> Branch: ${BRANCH}"
 
 if [[ ! -e "${WORKDIR}/${SLICE_CFG}" || -z "${SLICE_CFG}" ]]; then
 	echo -e "\n!!! ERROR: Unable to find 'SLICE_CFG: [ ${SLICE_CFG} ]' in your repository !!!"
@@ -49,6 +51,19 @@ if [[ ! -e "${WORKDIR}/${SLICE_CFG}" || -z "${SLICE_CFG}" ]]; then
 	echo -e "}\n"
 	echo "* The path is relative to the root of your repository: 'config.ini' or 'stls/config.ini'"
 	echo
+else
+	# Attempt to determine the center of the bed, since the Slic3r CLI defaults to placing objects at 100,100 (which may
+	# not be appropriate for all machines)
+	BEDSHAPE="$(grep bed_shape "${WORKDIR}/${SLICE_CFG}" | cut -d, -f3)"
+	echo ">>> Got BEDSHAPE: ${BEDSHAPE}"
+	
+	if [[ $BEDSHAPE =~ ^[0-9]+x[0-9]+ ]]; then
+		CENTER_OF_BED="$((${BEDSHAPE%x*}/2)),$((${BEDSHAPE#*x}/2))"
+	else
+		CENTER_OF_BED="125,105"
+	fi
+
+	echo ">>> Center of bed coordinates will be set to ${CENTER_OF_BED}"
 fi
 
 if [[ -z "${GITHUB_TOKEN}" ]]; then
@@ -68,7 +83,7 @@ fi
 # --print-center 100,100 --output-filename-format {input_filename_base}_{printer_model}.gcode_updated
 if [[ ! -z "${EXTRA_SLICER_ARGS}" ]]; then
 	echo -e "Adding the following arguments to Slic3r: ${EXTRA_SLICER_ARGS}"
-	IFS=' ' read -a EXTRA_SLICER_ARGS <<< "${EXTRA_SLICER_ARGS}"
+	IFS=' ' read -r -a EXTRA_SLICER_ARGS <<< "${EXTRA_SLICER_ARGS}"
 fi
 
 echo -e "\n>>> Processing STLs $* with ${SLICE_CFG}\n"
@@ -77,19 +92,19 @@ for stl in "$@"; do
 	mkdir -p "${WORKDIR}/${TMPDIR}"
 	TMPDIR="$(mktemp -d)"
 
-	echo -e "\n>>> Generating STL for $stl ...\n"
+	echo -e "\n>>> Generating STL for ${stl} ...\n"
 	if /Slic3r/slic3r-dist/slic3r \
 		--no-gui \
 		--load "${WORKDIR}/${SLICE_CFG}" \
 		--output-filename-format '{input_filename_base}_{layer_height}mm_{filament_type[0]}_{printer_model}.gcode_updated' \
 		--output "${TMPDIR}" \
-		--print-center "125,105" \
+		--print-center "${CENTER_OF_BED}" \
 		"${EXTRA_SLICER_ARGS[@]}" "${WORKDIR}/${stl}"; then
 		echo -e "\n>>> Successfully generated gcode for STL\n"
 	else
 		exit_code=$?
 		echo -e "\n!!! Failure generating STL  - rc: ${exit_code} !!!\n"
-		exit $exit_code
+		exit ${exit_code}
 	fi
 
 	GENERATED_GCODE="$(basename "$(find "$TMPDIR" -name '*.gcode_updated')")"
@@ -149,13 +164,14 @@ EOF
 			fi
 
 			if curl -f -sSL \
-				-X PUT "https://api.github.com/repos/${GITHUB_REPOSITORY}/contents/${GCODE}?ref=${BRANCH}" \
+				-X PUT "https://api.github.com/repos/${GITHUB_REPOSITORY}/contents/${GCODE}" \
 				-H "Accept: application/vnd.github.v3+json" \
 				-H "Authorization: token ${GITHUB_TOKEN}" \
 				-H "User-Agent: github.com/davidk/docker-slic3r-prusa3d" \
 				-d @- <<-EOF
 				{
 				  "message": "Slic3r: updating ${GCODE}",
+				  "branch": "${BRANCH}",
 				  "committer": {
 				    "name": "${GITHUB_ACTOR}",
 				    "email": "${GITHUB_ACTOR}@example.com"
@@ -194,13 +210,14 @@ EOF
 		echo -e "\n>>> Committing new file ${GCODE}\n"
 
 		if curl -f -sSL \
-		-X PUT "https://api.github.com/repos/${GITHUB_REPOSITORY}/contents/${GCODE}?ref=${BRANCH}" \
+		-X PUT "https://api.github.com/repos/${GITHUB_REPOSITORY}/contents/${GCODE}" \
 		-H "Accept: application/vnd.github.v3+json" \
 		-H "Authorization: token ${GITHUB_TOKEN}" \
 		-H "User-Agent: github.com/davidk/docker-slic3r-prusa3d" \
 		-d @- <<-EOF
 		{
 		  "message": "Slic3r: adding ${GCODE}",
+		  "branch": "${BRANCH}",
 		  "committer": {
 		    "name": "${GITHUB_ACTOR}",
 		    "email": "${GITHUB_ACTOR}@example.com"
