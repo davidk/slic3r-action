@@ -133,7 +133,7 @@ for stl in "$@"; do
 			if SHA="$({
 				curl -f -sSL \
 				-H "Authorization: bearer ${GITHUB_TOKEN}" \
-				-H "User-Agent: github.com/davidk/docker-slic3r-prusa3d" \
+				-H "User-Agent: github.com/davidk/slic3r-action" \
 				"https://api.github.com/graphql" \
 				-d @- <<-EOF
 				{
@@ -167,7 +167,7 @@ EOF
 				-X PUT "https://api.github.com/repos/${GITHUB_REPOSITORY}/contents/${GCODE}" \
 				-H "Accept: application/vnd.github.v3+json" \
 				-H "Authorization: token ${GITHUB_TOKEN}" \
-				-H "User-Agent: github.com/davidk/docker-slic3r-prusa3d" \
+				-H "User-Agent: github.com/davidk/slic3r-action" \
 				-d @- <<-EOF
 				{
 				  "message": "Slic3r: updating ${GCODE}",
@@ -213,7 +213,7 @@ EOF
 		-X PUT "https://api.github.com/repos/${GITHUB_REPOSITORY}/contents/${GCODE}" \
 		-H "Accept: application/vnd.github.v3+json" \
 		-H "Authorization: token ${GITHUB_TOKEN}" \
-		-H "User-Agent: github.com/davidk/docker-slic3r-prusa3d" \
+		-H "User-Agent: github.com/davidk/slic3r-action" \
 		-d @- <<-EOF
 		{
 		  "message": "Slic3r: adding ${GCODE}",
