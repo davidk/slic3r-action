@@ -20,15 +20,17 @@
 # EXTRA_SLICER_ARGS - these are additions to the slic3r command-line; ex: --print-center 100,100
 # BRANCH - the branch to operate on for queries to the API (default: master; others untested)
 # UPDATE_RETRY - the number of times to retry a repository update, in case we desync between SHA grab and update
-#
+# CENTER_OF_BED - The center of the bed. This is used to figure out where to place the object.
 WORKDIR="/github/workspace"
 
 # Create a lock but wait if it is already held. 
 # This and the retry system help to work around inconsistent repository operations.
 # Derived from the flock(2) manual page.
 echo "Launched at: $(date +%H:%M:%S:%N)"
+
 (
 flock 9 
+
 echo "Running at: $(date +%H:%M:%S:%N)"
 
 if [[ -z "${BRANCH}" ]]; then
@@ -51,20 +53,24 @@ if [[ ! -e "${WORKDIR}/${SLICE_CFG}" || -z "${SLICE_CFG}" ]]; then
 	echo -e "}\n"
 	echo "* The path is relative to the root of your repository: 'config.ini' or 'stls/config.ini'"
 	echo
-else
-	# Attempt to determine the center of the bed, since the Slic3r CLI defaults to placing objects at 100,100 (which may
-	# not be appropriate for all machines)
+
+	exit 1
+fi
+
+# Attempt to determine the center of the bed, since the Slic3r CLI defaults to placing objects 
+# at 100,100 (which may not be appropriate for all machines)
+# Note: CENTER_OF_BED gets set to 100,100 if this fails.
+if [[ -z "${CENTER_OF_BED}" ]]; then
 	BEDSHAPE="$(grep bed_shape "${WORKDIR}/${SLICE_CFG}" | cut -d, -f3)"
-	echo ">>> Got BEDSHAPE: ${BEDSHAPE}"
-	
+
+	echo ">>> Got bed_shape from configuration file: ${BEDSHAPE}"
+	# Example: 123x230
 	if [[ $BEDSHAPE =~ ^[0-9]+x[0-9]+ ]]; then
 		CENTER_OF_BED="$((${BEDSHAPE%x*}/2)),$((${BEDSHAPE#*x}/2))"
-	else
-		CENTER_OF_BED="125,105"
 	fi
-
-	echo ">>> Center of bed coordinates will be set to ${CENTER_OF_BED}"
 fi
+
+echo ">>> Center of bed coordinates will be set to: ${CENTER_OF_BED}"
 
 if [[ -z "${GITHUB_TOKEN}" ]]; then
 	echo -e "\n!!! ERROR: Unable to find your GITHUB_TOKEN !!!"
@@ -74,6 +80,8 @@ if [[ -z "${GITHUB_TOKEN}" ]]; then
 	echo "To do this manually, add this line to your actions"
 	echo "secret = [\"GITHUB_TOKEN\"]"
 	echo
+
+	exit 1
 fi
 
 # EXTRA_SLICER_ARGS
@@ -98,7 +106,7 @@ for stl in "$@"; do
 		--load "${WORKDIR}/${SLICE_CFG}" \
 		--output-filename-format '{input_filename_base}_{layer_height}mm_{filament_type[0]}_{printer_model}.gcode_updated' \
 		--output "${TMPDIR}" \
-		--print-center "${CENTER_OF_BED}" \
+		--print-center "${CENTER_OF_BED:-100,100}" \
 		"${EXTRA_SLICER_ARGS[@]}" "${WORKDIR}/${stl}"; then
 		echo -e "\n>>> Successfully generated gcode for STL\n"
 	else

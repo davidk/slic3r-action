@@ -2,7 +2,7 @@
 
 This action slices STLs into gcode for your 3D printer. All of this happens around GitHub's infrastructure.
 
-### What do I need to get started?
+### Getting started
 
 * A `slic3r` configuration ([Prusa3D's fork](https://github.com/prusa3d/Slic3r/releases)) committed to your repository.
 
@@ -78,8 +78,26 @@ Your repository might end up looking something like this:
 	    ├── usg_0.15mm_PET_MK2S.gcode
 	    └── usg.stl
 
-### What should I expect
+### Output
 
 On an event that launches the GitHub Action (like a push), this will run and drop a sliced .gcode file in the same location as the STL. 
 
 The gcode file should be ready for your 3D printer when it's done.
+
+### Environmental variables
+
+#### Required
+
+* GITHUB_TOKEN - A secret so that the action can add gcode to the repository. Provided by GitHub Actions.
+
+* SLICE_CFG    - Your slic3r configuration, with layer height, filament and printer settings pre-selected.
+
+#### Optional
+
+* EXTRA_SLICER_ARGS - these are additions to the slic3r command-line; ex: --print-center 100,100
+
+* BRANCH - the branch to operate on for queries to the API (default: master)
+
+* UPDATE_RETRY - the number of times to retry a repository update, in case we desync between SHA grab and update (default: 5)
+
+* CENTER_OF_BED - The center of the bed. This is used to figure out where to place the object. This is automatically calculated if your `config.ini` has `bed_shape` defined (default: 100,100)
