@@ -2,6 +2,10 @@
 
 This action slices STLs into gcode for your 3D printer. All of this happens around GitHub's infrastructure.
 
+### Sample repository
+
+A test repository that uses this action is [available here](https://github.com/davidk/slic3r-action-test). The test repository may not always be in sync with the documented configuration/example, as it's used to test development work.
+
 ### Getting started
 
 * A `slic3r` configuration ([Prusa3D's fork](https://github.com/prusa3d/Slic3r/releases)) committed to your repository.
