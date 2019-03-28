@@ -10,6 +10,7 @@ LABEL "com.github.actions.icon"="package"
 LABEL "com.github.actions.color"="blue"
 
 COPY entrypoint.sh /entrypoint.sh
+COPY LICENSE-slic3r /
 
 USER root
 
