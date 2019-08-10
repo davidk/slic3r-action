@@ -1,0 +1,31 @@
+on: push
+name: generate gcode
+jobs:
+  screwFunnel:
+    name: screw funnel
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: screw funnel
+      uses: davidk/slic3r-action/gcode@updates
+      env:
+        BRANCH: master
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SLICE_CFG: config-vase.ini
+      with:
+        args: screw-funnel.stl
+    - name: esp8266 huzzah case
+      uses: davidk/slic3r-action/gcode@updates
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SLICE_CFG: config.ini
+      with:
+        args: case_with_bottom_cutout.stl
+    - name: esp8266 huzzah cover
+      uses: davidk/slic3r-action/gcode@updates
+      env:
+        EXTRA_SLICER_ARGS: --output-filename-format {input_filename_base}_{printer_model}.gcode_updated
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SLICE_CFG: config.ini
+      with:
+        args: cover.stl

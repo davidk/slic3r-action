@@ -1,4 +1,4 @@
-# pet-i3-mk2
+# GitHub Actions - slic3r-action-test (pet-i3-mk2 profile)
 
 This is an example action that slices [this object from Thingiverse](https://www.thingiverse.com/thing:2177951).
 
